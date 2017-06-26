@@ -23,7 +23,7 @@ object TestFM extends App {
             val index = elem.split(":")(0).toInt
             val value = elem.split(":")(1)
             val new_index = index + 1
-            index.toString + value
+            new_index.toString + ":" +value
         }
         val line_arr = label +: features_process
         line_arr.mkString(" ")
@@ -48,9 +48,11 @@ object TestFM extends App {
     val path_out = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/training_processed"
 
     // process lines
+    print("indeicChange")
     indiceChange(sc,path_in,path_out)
 
     //    "hdfs://ns1/whale-tmp/url_combined"
+    print("load svm file")
     val training = MLUtils.loadLibSVMFile(sc, path_out).cache()
 
     //    val task = args(1).toInt
@@ -58,9 +60,11 @@ object TestFM extends App {
     //    val stepSize = args(3).toDouble
     //    val miniBatchFraction = args(4).toDouble
 
+    print("train SGD")
     val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
 
 
+    print("train lbfgs")
     val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 5, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
     
   }
