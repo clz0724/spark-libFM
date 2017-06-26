@@ -18,16 +18,18 @@ object TestFM extends App {
         val segs: Array[String] = line.split('\t')
         val label = if(segs(0) == "1") "1" else "-1"
         val features = segs.drop(1)
-        val features_process = features.map{
+        val features_process: Array[String] = features.map{
           elem =>
             val index = elem.split(":")(0).toInt
             val value = elem.split(":")(1)
             val new_index = index + 1
             new_index.toString + ":" +value
         }
+
         val line_arr = label +: features_process
         line_arr.mkString(" ")
-    }
+    }.sortBy(_.split(":")(0).toInt,ascending = true)
+
     train.saveAsTextFile(path_out)
 
   }
