@@ -1,4 +1,5 @@
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
 import org.apache.spark.mllib.util.MLUtils
@@ -33,6 +34,9 @@ object TestFM extends App {
 
 
   override def main(args: Array[String]): Unit = {
+
+    // print warn
+    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
     val sc: SparkContext = new SparkContext(new SparkConf().setAppName("TESTFM"))
 
