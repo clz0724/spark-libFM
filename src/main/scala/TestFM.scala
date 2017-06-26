@@ -3,6 +3,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
 import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.rdd.RDD
 
 
 /**
@@ -13,11 +14,12 @@ import org.apache.spark.mllib.util.MLUtils
 object TestFM extends App {
   def indiceChange(sc: SparkContext,path_in :String,path_out:String): Unit ={
     val data = sc.textFile(path_in)
-    val train = data.map{
+    val train: RDD[String] = data.map{
       line=>
         val segs: Array[String] = line.split('\t')
         val label = if(segs(0) == "1") "1" else "-1"
         val features = segs.drop(1)
+        // add indices 1
         val features_process: Array[String] = features.map{
           elem =>
             val index = elem.split(":")(0).toInt
@@ -25,10 +27,16 @@ object TestFM extends App {
             val new_index = index + 1
             new_index.toString + ":" +value
         }
-
-        val line_arr = label +: features_process
+        // sort index
+        val features_sort: Array[String] = features_process.sortWith{
+          (leftE, rightE) =>
+            leftE.split(":")(0).toInt < rightE.split(":")(0).toInt
+        }
+        val line_arr: Array[String] = label +: features_sort
+        // string line
         line_arr.mkString(" ")
-    }.sortBy(_.split(":")(0).toInt,ascending = true)
+    }
+
     print(train.take(2))
 
     train.saveAsTextFile(path_out)
