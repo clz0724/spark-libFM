@@ -13,6 +13,9 @@ import org.apache.spark.rdd.RDD
 
 object TestFM extends App {
   def indiceChange(sc: SparkContext,path_in :String,path_out:String): Unit ={
+    """
+      |indice base 0 to 1; label 0 to -1
+    """.stripMargin
     val data = sc.textFile(path_in)
     val train: RDD[String] = data.map{
       line=>
@@ -37,7 +40,7 @@ object TestFM extends App {
         line_arr.mkString(" ")
     }
 
-    print(train.take(2))
+    //print(train.take(2))
 
     train.saveAsTextFile(path_out)
 
@@ -61,7 +64,7 @@ object TestFM extends App {
     // process lines
     print("indeicChange")
     indiceChange(sc,path_in,path_out)
-/*
+
     //    "hdfs://ns1/whale-tmp/url_combined"
     print("load svm file")
     val training = MLUtils.loadLibSVMFile(sc, path_out).cache()
@@ -77,6 +80,5 @@ object TestFM extends App {
 
     print("train lbfgs")
     val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 5, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
- */
   }
 }
