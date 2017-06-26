@@ -6,9 +6,6 @@ import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
 
-/**
- * Created by zrf on 4/18/15.
- */
 
 
 object TestFM extends App {
@@ -76,7 +73,7 @@ object TestFM extends App {
     //    val miniBatchFraction = args(4).toDouble
 
     print("train SGD")
-    val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
+    //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
 
 
     print("train lbfgs")
