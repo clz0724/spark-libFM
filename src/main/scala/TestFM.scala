@@ -54,6 +54,7 @@ object TestFM extends App {
 
     val conf = new SparkConf().setAppName("sparkFM")
     conf.set("spark.hadoop.validateOutputSpecs","false")
+    conf.set("spark.kryoserializer.buffer.max","2047m")
 
     val sc: SparkContext = new SparkContext(conf)
     sc.setCheckpointDir("/team/ad_wajue/chenlongzhen/checkpoint")
@@ -63,7 +64,7 @@ object TestFM extends App {
 
     // process lines
     print("indeicChange")
-    indiceChange(sc,path_in,path_out)
+    //indiceChange(sc,path_in,path_out)
 
     //    "hdfs://ns1/whale-tmp/url_combined"
     print("load svm file")
