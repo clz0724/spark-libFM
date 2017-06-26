@@ -1,5 +1,5 @@
 
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
@@ -44,16 +44,23 @@ object TestFM extends App {
 
   }
 
+  def process_data(sc:SparkContext,path_in:String,path_out:String):RDD[LabeledPoint]={
+
+    indiceChange(sc,path_in,path_out)
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, path_out).cache()
+    data
+  }
+
 
   override def main(args: Array[String]): Unit = {
 
-    val task = 1
-    val allIterations = 20
-    val numCorrections = 20
-    val tolerance = 1e-7
-    val dim = (true,true,5)
-    val regParam = (0,0.01,0.01)
-    val initStd = 0.1
+    val intask = 1
+    val inallIterations = 20
+    val innumCorrections = 20
+    val intolerance = 1e-7
+    val indim = 5
+    val inregParam = (0,0.01,0.01)
+    val ininitStd = 0.1
 
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -65,16 +72,19 @@ object TestFM extends App {
     val sc: SparkContext = new SparkContext(conf)
     sc.setCheckpointDir("/team/ad_wajue/chenlongzhen/checkpoint")
 
-    val path_in = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/training"
-    val path_out = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/training_processed"
+    val train_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
+    val train_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"
+    val test_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
+    val test_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"
+
 
     // process lines
-    print("indeicChange")
-    //indiceChange(sc,path_in,path_out)
+    val logger = LogManager.getRootLogger
 
-    //    "hdfs://ns1/whale-tmp/url_combined"
-    print("load svm file")
-    val training = MLUtils.loadLibSVMFile(sc, path_out).cache()
+
+    logger.info("processing data")
+    val train_data = process_data(sc,train_path_in,train_path_out)
+    val test_data = process_data(sc,test_path_in,test_path_out)
 
     //    val task = args(1).toInt
     //    val numIterations = args(2).toInt
@@ -85,22 +95,24 @@ object TestFM extends App {
     //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
 
 
-    print("train lbfgs")
-
-    for (i <- Range(0,allIterations,step = 5)) {
-      val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 5, numCorrections = 10, tolerance = 1e-7, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
+    logger.info("========>train lbfgs")
+    for (i <- Range(0,inallIterations,step = 5)) {
       val iter:Int = i + 5
-      fm2.save(sc, "/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_${iter}")
+      logger.info(s"=========>step $iter")
+      val fm2 = FMWithLBFGS.train(train_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd)
+      logger.info(s"=========>save $iter")
+      fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_$iter")
 
       // evaluate
-      val predictionAndLabels = training.map { case LabeledPoint(label, features) =>
+      val predictionAndLabels = test_data.map { case LabeledPoint(label, features) =>
         val prediction = fm2.predict(features)
         (prediction, label)
       }
+
       // Instantiate metrics object
       val metrics = new BinaryClassificationMetrics(predictionAndLabels)
       val auROC = metrics.areaUnderROC
-      println("Train Area under ROC = " + auROC)
+      logger.info("========>Train Area under ROC = " + auROC)
     }
 
     //predict
