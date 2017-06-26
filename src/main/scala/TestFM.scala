@@ -38,7 +38,11 @@ object TestFM extends App {
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
-    val sc: SparkContext = new SparkContext(new SparkConf().setAppName("TESTFM"))
+    val conf = new SparkConf().setAppName("sparkFM")
+    conf.set("spark.hadoop.validateOutputSpecs","false")
+
+    val sc: SparkContext = new SparkContext(conf)
+    sc.setCheckpointDir("/team/ad_wajue/chenlongzhen/checkpoint")
 
     val path_in = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/training"
     val path_out = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/training_processed"
