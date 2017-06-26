@@ -1,5 +1,6 @@
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
 import org.apache.spark.mllib.util.MLUtils
@@ -46,6 +47,14 @@ object TestFM extends App {
 
   override def main(args: Array[String]): Unit = {
 
+    val task = 1
+    val allIterations = 20
+    val numCorrections = 20
+    val tolerance = 1e-7
+    val dim = (true,true,5)
+    val regParam = (0,0.01,0.01)
+    val initStd = 0.1
+
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
@@ -77,6 +86,24 @@ object TestFM extends App {
 
 
     print("train lbfgs")
-    val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 10,tolerance = 1e-7, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
+
+    for (i <- Range(0,allIterations,step = 5)) {
+      val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 5, numCorrections = 10, tolerance = 1e-7, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
+      fm2.save(sc, "/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_${i+5}")
+
+      // evaluate
+      val predictionAndLabels = training.map { case LabeledPoint(label, features) =>
+        val prediction = fm2.predict(features)
+        (prediction, label)
+      }
+      // Instantiate metrics object
+      val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+      val auROC = metrics.areaUnderROC
+      println("Train Area under ROC = " + auROC)
+    }
+
+    //predict
+    //val path_test_in = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/testing"
+    //val path_test_out = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/testing_processed"
   }
 }
