@@ -96,24 +96,10 @@ object TestFM extends App {
 
 
     logger.info("========>train lbfgs")
-    for (i <- Range(0,inallIterations,step = 5)) {
-      val iter:Int = i + 5
-      logger.info(s"=========>step $iter")
-      val fm2 = FMWithLBFGS.train(train_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd)
-      logger.info(s"=========>save $iter")
-      fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_$iter")
 
-      // evaluate
-      val predictionAndLabels = test_data.map { case LabeledPoint(label, features) =>
-        val prediction = fm2.predict(features)
-        (prediction, label)
-      }
+    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd)
+    fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
 
-      // Instantiate metrics object
-      val metrics = new BinaryClassificationMetrics(predictionAndLabels)
-      val auROC = metrics.areaUnderROC
-      logger.info("========>Train Area under ROC = " + auROC)
-    }
 
     //predict
     //val path_test_in = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/testing"

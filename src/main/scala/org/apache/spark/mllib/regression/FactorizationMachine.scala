@@ -110,6 +110,7 @@ object FMModel extends Loader[FMModel] {
       dataRDD.saveAsParquetFile(dataPath(path))
     }
 
+
     def load(sc: SparkContext, path: String): FMModel = {
       val sqlContext = new SQLContext(sc)
       // Load Parquet data.

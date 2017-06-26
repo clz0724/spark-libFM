@@ -1,7 +1,9 @@
 package org.apache.spark.mllib.regression
 
+import org.apache.log4j.LogManager
 import org.apache.spark.Logging
-import org.apache.spark.mllib.linalg.{DenseMatrix, Vectors, Vector}
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.linalg.{DenseMatrix, Vector, Vectors}
 import org.apache.spark.mllib.optimization.LBFGS
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -27,16 +29,18 @@ object FMWithLBFGS {
    * @param initStd Standard Deviation used for factorization matrix initialization.
    */
   def train(input: RDD[LabeledPoint],
+            test: RDD[LabeledPoint],
             task: Int,
             numIterations: Int,
             numCorrections: Int,
             tolerance:Double,
             dim: (Boolean, Boolean, Int),
             regParam: (Double, Double, Double),
-            initStd: Double): FMModel = {
+            initStd: Double
+            ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input)
+      .run(input,test)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -54,7 +58,8 @@ class FMWithLBFGS(private var task: Int,
                   private var numCorrections: Int,
                   private var dim: (Boolean, Boolean, Int),
                   private var regParam: (Double, Double, Double),
-                  private var tolerance:Double) extends Serializable with Logging {
+                  private var tolerance:Double
+                 ) extends Serializable with Logging {
 
   private var k0: Boolean = dim._1
   private var k1: Boolean = dim._2
@@ -184,7 +189,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint]): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint]): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -211,9 +216,13 @@ class FMWithLBFGS(private var task: Int,
 
     val updater = new FMUpdater(k0, k1, k2, r0, r1, r2, numFeatures)
 
+
+    //val optimizer = new LBFGS(gradient, updater)
+    //  .setNumIterations(numIterations)
+     //   .setConvergenceTol(tolerance)
     val optimizer = new LBFGS(gradient, updater)
-      .setNumIterations(numIterations)
-        .setConvergenceTol(tolerance)
+      .setNumIterations(5)
+      .setConvergenceTol(tolerance)
 
     val data = task match {
       case 0 =>
@@ -224,7 +233,33 @@ class FMWithLBFGS(private var task: Int,
 
     val initWeights = generateInitWeights()
 
-    val weights = optimizer.optimize(data, initWeights)
+
+    //val weights: Vector = optimizer.optimize(data, initWeights)
+
+    // test auc every 5 step
+    val logger = LogManager.getRootLogger
+    var weights:Vector = initWeights
+
+    for (i <- Range(0,numIterations,5)){
+      val iter = i + 5
+      logger.info(s"========>Train step $iter ")
+
+      weights= optimizer.optimize(data, weights)
+      val model = createModel(weights)
+
+      // evaluate
+      val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+        val prediction = model.predict(features)
+        (prediction, label)
+      }
+
+      // Instantiate metrics object
+      val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+      val auROC = metrics.areaUnderROC
+      logger.info("========>Train Area under ROC = " + auROC)
+    }
+
+
 
     data.unpersist()
 
