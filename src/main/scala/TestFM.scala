@@ -29,6 +29,7 @@ object TestFM extends App {
         val line_arr = label +: features_process
         line_arr.mkString(" ")
     }.sortBy(_.split(":")(0).toInt,ascending = true)
+    print(train.take(2))
 
     train.saveAsTextFile(path_out)
 
@@ -52,7 +53,7 @@ object TestFM extends App {
     // process lines
     print("indeicChange")
     indiceChange(sc,path_in,path_out)
-
+/*
     //    "hdfs://ns1/whale-tmp/url_combined"
     print("load svm file")
     val training = MLUtils.loadLibSVMFile(sc, path_out).cache()
@@ -68,6 +69,6 @@ object TestFM extends App {
 
     print("train lbfgs")
     val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 5, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
-    
+ */
   }
 }
