@@ -89,7 +89,8 @@ object TestFM extends App {
 
     for (i <- Range(0,allIterations,step = 5)) {
       val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 5, numCorrections = 10, tolerance = 1e-7, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
-      fm2.save(sc, "/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_${i+5}")
+      val iter:Int = i + 5
+      fm2.save(sc, "/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_${iter}")
 
       // evaluate
       val predictionAndLabels = training.map { case LabeledPoint(label, features) =>
