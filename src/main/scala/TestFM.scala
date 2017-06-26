@@ -1,6 +1,5 @@
 
 import org.apache.log4j.{Level, LogManager, Logger}
-import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
 import org.apache.spark.mllib.util.MLUtils
@@ -55,7 +54,7 @@ object TestFM extends App {
   override def main(args: Array[String]): Unit = {
 
     val intask = 1
-    val inallIterations = 20
+    val inallIterations = 4
     val innumCorrections = 20
     val intolerance = 1e-7
     val indim = 5
@@ -97,7 +96,7 @@ object TestFM extends App {
 
     logger.info("========>train lbfgs")
 
-    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd)
+    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step =1)
     fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
 
 

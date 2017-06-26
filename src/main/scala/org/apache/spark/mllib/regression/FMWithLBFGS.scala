@@ -1,6 +1,6 @@
 package org.apache.spark.mllib.regression
 
-import org.apache.log4j.LogManager
+import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.Logging
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.linalg.{DenseMatrix, Vector, Vectors}
@@ -36,11 +36,12 @@ object FMWithLBFGS {
             tolerance:Double,
             dim: (Boolean, Boolean, Int),
             regParam: (Double, Double, Double),
-            initStd: Double
+            initStd: Double,
+            step: Int
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test)
+      .run(input,test,step)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -189,7 +190,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint]): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -220,8 +221,9 @@ class FMWithLBFGS(private var task: Int,
     //val optimizer = new LBFGS(gradient, updater)
     //  .setNumIterations(numIterations)
      //   .setConvergenceTol(tolerance)
+
     val optimizer = new LBFGS(gradient, updater)
-      .setNumIterations(5)
+      .setNumIterations(step)
       .setConvergenceTol(tolerance)
 
     val data = task match {
@@ -237,11 +239,11 @@ class FMWithLBFGS(private var task: Int,
     //val weights: Vector = optimizer.optimize(data, initWeights)
 
     // test auc every 5 step
-    val logger = LogManager.getRootLogger
+    val logger = Logger.getLogger("MY LOGGER")
     var weights:Vector = initWeights
 
-    for (i <- Range(0,numIterations,5)){
-      val iter = i + 5
+    for (i <- Range(0,numIterations,step)){
+      val iter = i + step
       logger.info(s"========>Train step $iter ")
 
       weights= optimizer.optimize(data, weights)
