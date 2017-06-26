@@ -8,9 +8,6 @@ import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
 
-/**
- * Created by zrf on 4/22/15.
- */
 object FMWithLBFGS {
   /**
    * Train a Factoriaton Machine Regression model given an RDD of (label, features) pairs. We run a fixed number
@@ -33,10 +30,11 @@ object FMWithLBFGS {
             task: Int,
             numIterations: Int,
             numCorrections: Int,
+            tolerance:Double,
             dim: (Boolean, Boolean, Int),
             regParam: (Double, Double, Double),
             initStd: Double): FMModel = {
-    new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam)
+    new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
       .run(input)
   }
@@ -55,7 +53,8 @@ class FMWithLBFGS(private var task: Int,
                   private var numIterations: Int,
                   private var numCorrections: Int,
                   private var dim: (Boolean, Boolean, Int),
-                  private var regParam: (Double, Double, Double)) extends Serializable with Logging {
+                  private var regParam: (Double, Double, Double),
+                  private var tolerance:Double) extends Serializable with Logging {
 
   private var k0: Boolean = dim._1
   private var k1: Boolean = dim._2
@@ -214,6 +213,7 @@ class FMWithLBFGS(private var task: Int,
 
     val optimizer = new LBFGS(gradient, updater)
       .setNumIterations(numIterations)
+        .setConvergenceTol(tolerance)
 
     val data = task match {
       case 0 =>

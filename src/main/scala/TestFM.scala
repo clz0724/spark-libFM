@@ -77,6 +77,6 @@ object TestFM extends App {
 
 
     print("train lbfgs")
-    val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 5, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
+    val fm2 = FMWithLBFGS.train(training, task = 1, numIterations = 20, numCorrections = 10,tolerance = 1e-7, dim = (true, true, 8), regParam = (0, 0.01, 0.01), initStd = 0.1)
   }
 }
