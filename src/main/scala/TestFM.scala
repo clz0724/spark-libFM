@@ -108,5 +108,6 @@ object TestFM extends App {
     //predict
     //val path_test_in = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/testing"
     //val path_test_out = "/team/ad_wajue/dw/rec_ml_test/rec_ml_test/model_dataSet/testing_processed"
+    sc.stop()
   }
 }

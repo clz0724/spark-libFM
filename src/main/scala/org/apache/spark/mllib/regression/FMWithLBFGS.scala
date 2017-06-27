@@ -271,10 +271,12 @@ class FMWithLBFGS(private var task: Int,
         logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath.")
 
         val hadoopConf = new org.apache.hadoop.conf.Configuration()
-        val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://localhost:9000"), hadoopConf)
+        val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://ns2"), hadoopConf)
         try {
           hdfs.delete(new org.apache.hadoop.fs.Path(checkPointPath +s"/model"), true)
-        } catch { case _ : Throwable => { } }
+        } catch { case _ : Throwable => {
+          logger.warn("rm hdfs wrong ")
+        } }
 
         model.save(sc,checkPointPath + s"/model")
       }else{
