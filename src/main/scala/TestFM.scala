@@ -9,11 +9,11 @@ import org.apache.spark.rdd.RDD
 
 
 object TestFM extends App {
-  def indiceChange(sc: SparkContext,path_in :String,path_out:String): Unit ={
+  def indiceChange(sc: SparkContext,path_in :String): RDD[String] ={
     """
       |indice base 0 to 1; label 0 to -1
     """.stripMargin
-    val data = sc.textFile(path_in).repartition(1000)
+    val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
       line=>
         val segs: Array[String] = line.split('\t')
@@ -24,7 +24,8 @@ object TestFM extends App {
           elem =>
             val index = elem.split(":")(0).toInt
             val value = elem.split(":")(1)
-            val new_index = index + 1
+            //val new_index = index + 1
+            val new_index = index
             new_index.toString + ":" +value
         }
         // sort index
@@ -37,17 +38,20 @@ object TestFM extends App {
         line_arr.mkString(" ")
     }
 
+
     //print(train.take(2))
 
-    train.saveAsTextFile(path_out)
+    //train.saveAsTextFile(path_out)
+
+    train
 
   }
 
   def process_data(sc:SparkContext,path_in:String):RDD[LabeledPoint]={
 
-    //indiceChange(sc,path_in,path_out)
+    val train: RDD[String] = indiceChange(sc,path_in)
     val util = new MyUtil
-    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, path_in,numFeatures = -1,minPartitions = 1000).cache()
+    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = 1000).cache()
     data
   }
 
