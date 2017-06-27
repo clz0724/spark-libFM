@@ -59,7 +59,7 @@ object TestFM extends App {
     val intask = args(0).toInt
     val inallIterations = args(1).toInt
     val innumCorrections = args(2).toInt
-    val intolerance = args(3).toInt
+    val intolerance = args(3).toDouble
     val indim = args(4).toInt
     val inreg1 = args(5).toDouble
     val inreg2 = args(5).toDouble
