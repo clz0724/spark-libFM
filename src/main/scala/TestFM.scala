@@ -13,7 +13,7 @@ object TestFM extends App {
     """
       |indice base 0 to 1; label 0 to -1
     """.stripMargin
-    val data = sc.textFile(path_in)
+    val data = sc.textFile(path_in).repartition(1000)
     val train: RDD[String] = data.map{
       line=>
         val segs: Array[String] = line.split('\t')
@@ -53,9 +53,33 @@ object TestFM extends App {
 
   override def main(args: Array[String]): Unit = {
 
+    val logger = Logger.getLogger("MY LOGGER")
+    logger.info(s"===\n args $args \n====")
+
+    val intask = args(0).toInt
+    val inallIterations = args(1).toInt
+    val innumCorrections = args(2).toInt
+    val intolerance = args(3).toInt
+    val indim = args(4).toInt
+    val inreg1 = args(5).toDouble
+    val inreg2 = args(5).toDouble
+    val ininitStd = args(6).toDouble
+    val instep = args(7).toInt
+    val checkPointPath = args(8)
+    val earlyStop = args(9).toInt
+
+    val train_path_in = args(10)
+    val train_path_out = args(11)
+    val test_path_in = args(12)
+    val test_path_out = args(13)
+
+    val inregParam = (0,inreg1,inreg2)
+
+
+    /*
     val intask = 1
-    val inallIterations = 3
-    val innumCorrections = 20
+    val inallIterations = 20
+    val innumCorrections = 5
     val intolerance = 1e-7
     val indim = 5
     val inregParam = (0,0.01,0.01)
@@ -63,6 +87,7 @@ object TestFM extends App {
     val instep = 1
     val checkPointPath = "/team/ad_wajue/chenlongzhen/checkPoint"
     val earlyStop = 10
+    */
 
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -74,14 +99,14 @@ object TestFM extends App {
     val sc: SparkContext = new SparkContext(conf)
     sc.setCheckpointDir("/team/ad_wajue/chenlongzhen/checkpoint")
 
-    val train_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
+
+/*    val train_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
     val train_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"
     val test_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
-    val test_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"
+    val test_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"*/
 
 
     // process lines
-    val logger = Logger.getLogger("MY LOGGER")
 
 
     logger.info("processing data")
@@ -99,7 +124,7 @@ object TestFM extends App {
 
     logger.info("train lbfgs")
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
-      numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance,
+      numIterations = innumCorrections, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
       checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc)
     //fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
