@@ -13,7 +13,7 @@ object TestFM extends App {
     """
       |indice base 0 to 1; label 0 to -1
     """.stripMargin
-    val data = sc.textFile(path_in)
+    val data = sc.textFile(path_in).repartition(1000).cache()
     val train: RDD[String] = data.map{
       line=>
         val segs: Array[String] = line.split('\t')
@@ -46,7 +46,7 @@ object TestFM extends App {
   def process_data(sc:SparkContext,path_in:String,path_out:String):RDD[LabeledPoint]={
 
     indiceChange(sc,path_in,path_out)
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, path_out).repartition(1000).cache()
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, path_out)
     data
   }
 
