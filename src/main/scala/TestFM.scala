@@ -60,7 +60,7 @@ object TestFM extends App {
     val indim = 5
     val inregParam = (0,0.01,0.01)
     val ininitStd = 0.1
-    val instep = 5
+    val instep = 1
     val checkPointPath = "/team/ad_wajue/chenlongzhen/checkPoint"
     val earlyStop = 10
 
