@@ -77,6 +77,7 @@ object TestFM extends App {
 
     val train_path_in = args(11)
     val test_path_in = args(13)
+    val ifTestTrain = args(14).toBoolean
 
     val inregParam = (0,inreg1,inreg2)
 
@@ -131,7 +132,7 @@ object TestFM extends App {
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
       numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
-      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc)
+      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain)
     //fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
 
 

@@ -2,6 +2,7 @@ package org.apache.spark.mllib.regression
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -57,7 +58,7 @@ class MyUtil {
       .map(_.trim)
       .filter(line => !(line.isEmpty || line.startsWith("#")))
       .map { line =>
-        val items = line.split('\t')
+        val items = line.split(' ')
         val label = items.head.toDouble
         val (indices, values) = items.tail.filter(_.nonEmpty).map { item =>
           val indexAndValue = item.split(':')
@@ -94,6 +95,20 @@ class MyUtil {
     parsed.map { case (label, indices, values) =>
       LabeledPoint(label, Vectors.sparse(d, indices, values))
     }
+  }
+
+  def evaluate(model:FMModel,data:RDD[LabeledPoint]): Double ={
+
+    // evaluate
+    val predictionAndLabels = data.map{ case LabeledPoint(label, features) =>
+      val prediction = model.predict(features)
+      (prediction, label)
+    }
+
+    // Instantiate metrics object
+    val metrics = new BinaryClassificationMetrics(predictionAndLabels)
+    val auROC = metrics.areaUnderROC
+    auROC
   }
 
 

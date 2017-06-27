@@ -39,11 +39,12 @@ object FMWithLBFGS {
             step: Int,
             checkPointPath:String,
             earlyStop:Int,
-            sc:SparkContext
+            sc:SparkContext,
+            ifTestTrain:Boolean
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test,step,checkPointPath,earlyStop,sc)
+      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -192,7 +193,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Boolean): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -219,15 +220,12 @@ class FMWithLBFGS(private var task: Int,
     val updater = new FMUpdater(k0, k1, k2, r0, r1, r2, numFeatures)
 
 
-    //val optimizer = new LBFGS(gradient, updater)
-    //  .setNumIterations(numIterations)
-     //   .setConvergenceTol(tolerance)
-
     val optimizer = new LBFGS(gradient, updater)
       .setNumIterations(step)
       .setConvergenceTol(tolerance)
       .setNumCorrections(numCorrections)
 
+    // train data for optimize
     val data = task match {
       case 0 =>
         input.map(l => (l.label, l.features)).persist()
@@ -235,16 +233,12 @@ class FMWithLBFGS(private var task: Int,
         input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist()
     }
 
+    // init
     val initWeights: Vector = generateInitWeights()
-
-
-    //val weights: Vector = optimizer.optimize(data, initWeights)
-
     val util  = new MyUtil
-
-    // test auc every 5 step
     val logger = Logger.getLogger("MY LOGGER")
     var weights: Vector = initWeights
+
 
     var pastAUC:Double= -1 // save every step's auc, for checkpoint
     var esTolerance = 0
@@ -253,32 +247,34 @@ class FMWithLBFGS(private var task: Int,
       logger.info(s"Train step $iter ")
 
       weights= optimizer.optimize(data, weights)
-      val model = createModel(weights)
+      val model: FMModel = createModel(weights)
 
-      // evaluate
-      val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
-        val prediction = model.predict(features)
-        (prediction, label)
+      var trainAUC = -0.1
+      var testAUC  = -0.1
+      if (ifTestTrain){
+        trainAUC = util.evaluate(model,input)
+        testAUC = util.evaluate(model,test)
+        logger.info(s"========>STEP: $iter, Train ROC: $trainAUC, Test AUC: $testAUC")
+      }else{
+        testAUC = util.evaluate(model,test)
+        logger.info(s"========>STEP: $iter, Test AUC: $testAUC")
       }
 
-      // Instantiate metrics object
-      val metrics = new BinaryClassificationMetrics(predictionAndLabels)
-      val auROC = metrics.areaUnderROC
-      logger.info("========>Train Area under ROC = " + auROC)
-
       // earlyStoping
-      if (pastAUC < auROC){
+      if (pastAUC < testAUC){
 
-        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath," +
+        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $testAUC, save model to checkPointPath," +
           s"early Stop tolerance is $esTolerance .")
         util.rmHDFS(path = checkPointPath + s"/model")
         model.save(sc,checkPointPath + s"/model")
-        pastAUC = auROC
+        // reset it
+        pastAUC = testAUC
+        esTolerance = 0
 
       }else{
 
         esTolerance += 1
-        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, early Stop tolerance is $esTolerance .")
+        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $testAUC, early Stop tolerance is $esTolerance .")
 
       }
 
