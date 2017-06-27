@@ -270,7 +270,8 @@ class FMWithLBFGS(private var task: Int,
       // earlyStoping
       if (pastAUC < auROC){
 
-        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath.")
+        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath," +
+          s"early Stop tolerance is $esTolerance .")
         util.rmHDFS(path = checkPointPath + s"/model")
         model.save(sc,checkPointPath + s"/model")
         pastAUC = auROC
