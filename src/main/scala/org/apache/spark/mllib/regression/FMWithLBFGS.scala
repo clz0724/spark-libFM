@@ -204,8 +204,7 @@ class FMWithLBFGS(private var task: Int,
 
     if (task == 0) {
       val (minT, maxT) = input.map(_.label).aggregate[(Double, Double)]((Double.MaxValue, Double.MinValue))({
-        case ((min, max), v) =>
-          (Math.min(min, v), Math.max(max, v))
+        case ((min, max), v) => (Math.min(min, v), Math.max(max, v))
       }, {
         case ((min1, max1), (min2, max2)) =>
           (Math.min(min1, min2), Math.max(max1, max2))
