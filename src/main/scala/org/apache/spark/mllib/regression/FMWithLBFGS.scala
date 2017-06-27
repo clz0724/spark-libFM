@@ -40,7 +40,7 @@ object FMWithLBFGS {
             checkPointPath:String,
             earlyStop:Int,
             sc:SparkContext,
-            ifTestTrain:Boolean
+            ifTestTrain:Int
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
@@ -193,7 +193,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Boolean): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -253,7 +253,7 @@ class FMWithLBFGS(private var task: Int,
       // AUC
       var trainAUC = -0.1
       var testAUC  = -0.1
-      if (ifTestTrain){
+      if (ifTestTrain != 0){
         trainAUC = util.evaluate(model,input)
         testAUC = util.evaluate(model,test)
         logger.info(s"========>STEP: $iter, Train ROC: $trainAUC, Test AUC: $testAUC")

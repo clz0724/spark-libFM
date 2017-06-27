@@ -77,7 +77,7 @@ object TestFM extends App {
 
     val train_path_in = args(11)
     val test_path_in = args(12)
-    val ifTestTrain = args(13).toBoolean
+    val ifTestTrain = args(13).toInt
 
     val inregParam = (0,inreg1,inreg2)
 
