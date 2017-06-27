@@ -54,7 +54,9 @@ object TestFM extends App {
   override def main(args: Array[String]): Unit = {
 
     val logger = Logger.getLogger("MY LOGGER")
-    logger.info(s"===\n args $args \n====")
+    logger.info(s"===args===")
+    args.foreach(elem=>logger.info(elem))
+    logger.info(s"===args===")
 
     val intask = args(0).toInt
     val inallIterations = args(1).toInt

@@ -36,13 +36,15 @@ class FMModel(val task: Int,
   require(task == 0 || task == 1)
 
   def predict(testData: Vector): Double = {
-    require(testData.size == numFeatures)
+    //require(testData.size == numFeatures)
 
     var pred = intercept
     if (weightVector.isDefined) {
       testData.foreachActive {
         case (i, v) =>
-          pred += weightVector.get(i) * v
+          if (i <= numFeatures) {
+            pred += weightVector.get(i) * v
+          }
       }
     }
 
@@ -51,9 +53,11 @@ class FMModel(val task: Int,
       var sumSqr = 0.0
       testData.foreachActive {
         case (i, v) =>
-          val d = factorMatrix(f, i) * v
-          sum += d
-          sumSqr += d * d
+          if (i <= numFeatures) {
+            val d = factorMatrix(f, i) * v
+            sum += d
+            sumSqr += d * d
+          }
       }
       pred += (sum * sum - sumSqr) / 2
     }
