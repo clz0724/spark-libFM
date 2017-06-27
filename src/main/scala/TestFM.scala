@@ -62,16 +62,16 @@ object TestFM extends App {
     val intolerance = args(3).toDouble
     val indim = args(4).toInt
     val inreg1 = args(5).toDouble
-    val inreg2 = args(5).toDouble
-    val ininitStd = args(6).toDouble
-    val instep = args(7).toInt
-    val checkPointPath = args(8)
-    val earlyStop = args(9).toInt
+    val inreg2 = args(6).toDouble
+    val ininitStd = args(7).toDouble
+    val instep = args(8).toInt
+    val checkPointPath = args(9)
+    val earlyStop = args(10).toInt
 
-    val train_path_in = args(10)
-    val train_path_out = args(11)
-    val test_path_in = args(12)
-    val test_path_out = args(13)
+    val train_path_in = args(11)
+    val train_path_out = args(12)
+    val test_path_in = args(13)
+    val test_path_out = args(14)
 
     val inregParam = (0,inreg1,inreg2)
 
