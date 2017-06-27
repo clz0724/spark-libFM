@@ -126,7 +126,7 @@ object TestFM extends App {
 
     logger.info("train lbfgs")
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
-      numIterations = innumCorrections, numCorrections = innumCorrections, tolerance = intolerance,
+      numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
       checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc)
     //fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
