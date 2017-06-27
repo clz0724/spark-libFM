@@ -8,7 +8,7 @@ import org.apache.spark.mllib.optimization.LBFGS
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import scala.util.Random
-import org.apache.spark.mllib.regression.Util
+import org.apache.spark.mllib.regression.MyUtil
 object FMWithLBFGS {
   /**
    * Train a Factoriaton Machine Regression model given an RDD of (label, features) pairs. We run a fixed number
@@ -240,7 +240,7 @@ class FMWithLBFGS(private var task: Int,
 
     //val weights: Vector = optimizer.optimize(data, initWeights)
 
-    val util  = new Util
+    val util  = new MyUtil
 
     // test auc every 5 step
     val logger = Logger.getLogger("MY LOGGER")
