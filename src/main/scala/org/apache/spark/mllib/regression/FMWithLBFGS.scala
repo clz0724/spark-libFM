@@ -7,9 +7,8 @@ import org.apache.spark.mllib.linalg.{DenseMatrix, Vector, Vectors}
 import org.apache.spark.mllib.optimization.LBFGS
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-
 import scala.util.Random
-
+import org.apache.spark.mllib.regression.Util
 object FMWithLBFGS {
   /**
    * Train a Factoriaton Machine Regression model given an RDD of (label, features) pairs. We run a fixed number
@@ -242,6 +241,8 @@ class FMWithLBFGS(private var task: Int,
 
     //val weights: Vector = optimizer.optimize(data, initWeights)
 
+    val util  = new Util
+
     // test auc every 5 step
     val logger = Logger.getLogger("MY LOGGER")
     var weights: Vector = initWeights
@@ -268,20 +269,17 @@ class FMWithLBFGS(private var task: Int,
 
       // earlyStoping
       if (pastAUC < auROC){
+
         logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath.")
-
-        val hadoopConf = new org.apache.hadoop.conf.Configuration()
-        val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://ns2"), hadoopConf)
-        try {
-          hdfs.delete(new org.apache.hadoop.fs.Path(checkPointPath +s"/model"), true)
-        } catch { case _ : Throwable => {
-          logger.warn("rm hdfs wrong ")
-        } }
-
+        util.rmHDFS(path = checkPointPath + s"/model")
         model.save(sc,checkPointPath + s"/model")
+        pastAUC = auROC
+
       }else{
+
         esTolerance += 1
         logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, early Stop tolerance is $esTolerance .")
+
       }
 
       // check es

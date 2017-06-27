@@ -102,7 +102,7 @@ object TestFM extends App {
       numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
       checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc)
-    fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
+    //fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
 
 
     //predict
