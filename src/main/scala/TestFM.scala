@@ -46,7 +46,7 @@ object TestFM extends App {
   def process_data(sc:SparkContext,path_in:String,path_out:String):RDD[LabeledPoint]={
 
     indiceChange(sc,path_in,path_out)
-    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, path_out).cache()
+    val data: RDD[LabeledPoint] = MLUtils.loadLibSVMFile(sc, path_out).repartition(1000).cache()
     data
   }
 
