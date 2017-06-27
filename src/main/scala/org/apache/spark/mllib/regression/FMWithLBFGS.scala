@@ -244,11 +244,13 @@ class FMWithLBFGS(private var task: Int,
     var esTolerance = 0
     for (i <- Range(0,numIterations,step) if esTolerance < earlyStop){
       val iter = i + step
-      logger.info(s"Train step $iter ")
+      logger.info(s"Train step $iter BEGIN")
 
+      // optimize
       weights= optimizer.optimize(data, weights)
       val model: FMModel = createModel(weights)
 
+      // AUC
       var trainAUC = -0.1
       var testAUC  = -0.1
       if (ifTestTrain){
