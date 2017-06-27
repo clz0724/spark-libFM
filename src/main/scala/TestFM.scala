@@ -81,7 +81,7 @@ object TestFM extends App {
 
 
     // process lines
-    val logger = LogManager.getRootLogger
+    val logger = Logger.getLogger("MY LOGGER")
 
 
     logger.info("processing data")
@@ -93,12 +93,11 @@ object TestFM extends App {
     //    val stepSize = args(3).toDouble
     //    val miniBatchFraction = args(4).toDouble
 
-    print("train SGD")
+    //print("train SGD")
     //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
 
 
-    logger.info("========>train lbfgs")
-
+    logger.info("train lbfgs")
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
       numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
