@@ -54,12 +54,15 @@ object TestFM extends App {
   override def main(args: Array[String]): Unit = {
 
     val intask = 1
-    val inallIterations = 4
+    val inallIterations = 3
     val innumCorrections = 20
     val intolerance = 1e-7
     val indim = 5
     val inregParam = (0,0.01,0.01)
     val ininitStd = 0.1
+    val instep = 5
+    val checkPointPath = "/team/ad_wajue/chenlongzhen/checkPoint"
+    val earlyStop = 10
 
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -96,7 +99,10 @@ object TestFM extends App {
 
     logger.info("========>train lbfgs")
 
-    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1, numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance, dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step =1)
+    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
+      numIterations = 5, numCorrections = innumCorrections, tolerance = intolerance,
+      dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
+      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc)
     fm2.save(sc, s"/team/ad_wajue/chenlongzhen/fmmodel_save/fmmodel_end")
 
 

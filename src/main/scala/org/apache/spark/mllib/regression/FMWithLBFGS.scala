@@ -1,7 +1,7 @@
 package org.apache.spark.mllib.regression
 
 import org.apache.log4j.{Level, LogManager, Logger}
-import org.apache.spark.Logging
+import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
 import org.apache.spark.mllib.linalg.{DenseMatrix, Vector, Vectors}
 import org.apache.spark.mllib.optimization.LBFGS
@@ -37,11 +37,14 @@ object FMWithLBFGS {
             dim: (Boolean, Boolean, Int),
             regParam: (Double, Double, Double),
             initStd: Double,
-            step: Int
+            step: Int,
+            checkPointPath:String,
+            earlyStop:Int,
+            sc:SparkContext
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test,step)
+      .run(input,test,step,checkPointPath,earlyStop,sc)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -190,7 +193,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -225,6 +228,7 @@ class FMWithLBFGS(private var task: Int,
     val optimizer = new LBFGS(gradient, updater)
       .setNumIterations(step)
       .setConvergenceTol(tolerance)
+      .setNumCorrections(numCorrections)
 
     val data = task match {
       case 0 =>
@@ -233,18 +237,20 @@ class FMWithLBFGS(private var task: Int,
         input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist()
     }
 
-    val initWeights = generateInitWeights()
+    val initWeights: Vector = generateInitWeights()
 
 
     //val weights: Vector = optimizer.optimize(data, initWeights)
 
     // test auc every 5 step
     val logger = Logger.getLogger("MY LOGGER")
-    var weights:Vector = initWeights
+    var weights: Vector = initWeights
 
-    for (i <- Range(0,numIterations,step)){
+    var pastAUC:Double= -1 // save every step's auc, for checkpoint
+    var esTolerance = 0
+    for (i <- Range(0,numIterations,step) if esTolerance < earlyStop){
       val iter = i + step
-      logger.info(s"========>Train step $iter ")
+      logger.info(s"Train step $iter ")
 
       weights= optimizer.optimize(data, weights)
       val model = createModel(weights)
@@ -259,9 +265,22 @@ class FMWithLBFGS(private var task: Int,
       val metrics = new BinaryClassificationMetrics(predictionAndLabels)
       val auROC = metrics.areaUnderROC
       logger.info("========>Train Area under ROC = " + auROC)
+
+      // earlyStoping
+      if (pastAUC < auROC){
+        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, save model to checkPointPath.")
+        model.save(sc,checkPointPath + s"/model")
+      }else{
+        esTolerance += 1
+        logger.info(s"pastAUC is $pastAUC, step $iter AUC is $auROC, early Stop tolerance is $esTolerance .")
+      }
+
+      // check es
+      if (esTolerance >= earlyStop){
+        logger.info(s"early Stoping")
+      }
+
     }
-
-
 
     data.unpersist()
 
