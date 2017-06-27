@@ -57,7 +57,7 @@ class MyUtil {
       .map(_.trim)
       .filter(line => !(line.isEmpty || line.startsWith("#")))
       .map { line =>
-        val items = line.split(' ')
+        val items = line.split('\t')
         val label = items.head.toDouble
         val (indices, values) = items.tail.filter(_.nonEmpty).map { item =>
           val indexAndValue = item.split(':')
