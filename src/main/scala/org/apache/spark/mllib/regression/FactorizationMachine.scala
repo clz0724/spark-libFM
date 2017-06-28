@@ -153,7 +153,7 @@ object FMModel extends Loader[FMModel] {
       val data = dataArray(0)
       val task = data.getInt(0)
       val factorMatrix: Matrix = data.getAs[Matrix](1)
-      val weightVector: Option[Vector] = data.getAs[Option[Vector]](2)
+      val weightVector: DenseVector = data.getAs[DenseVector](2)
       val intercept: Double = data.getDouble(3)
       val min = data.getDouble(4)
       val max = data.getDouble(5)
@@ -184,7 +184,7 @@ object FMModel extends Loader[FMModel] {
       for (i <- 0 until numFeatures){
         val arrBuffer = ArrayBuffer[Double]()
 
-        val weight = weightVector.get(i)
+        val weight = weightVector.apply(i)
         arrBuffer += weight
 
         for (f <- 0 until numFactors){
