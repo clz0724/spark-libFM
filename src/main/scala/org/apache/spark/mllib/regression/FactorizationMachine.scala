@@ -1,6 +1,7 @@
 package org.apache.spark.mllib.regression
 
 import java.io.{File, PrintWriter}
+import java.text.NumberFormat
 
 import org.json4s.DefaultFormats
 import org.json4s.JsonDSL._
@@ -130,7 +131,7 @@ object FMModel extends Loader[FMModel] {
       val data = dataArray(0)
       val task = data.getInt(0)
       val factorMatrix = data.getAs[Matrix](1)
-      val weightVector = data.getAs[Option[Vector]](2)
+      val weightVector:Option[Vector] = data.getAs[Option[Vector]](2)
       val intercept = data.getDouble(3)
       val min = data.getDouble(4)
       val max = data.getDouble(5)
@@ -170,6 +171,13 @@ object FMModel extends Loader[FMModel] {
         val NAME = segs(2)
         IDFeatureMap += (ID -> NAME)
       }
+      // 保留小数
+      val format = NumberFormat.getInstance()
+      format.setMinimumFractionDigits(1)
+      format.setMinimumIntegerDigits(1)
+      format.setMaximumFractionDigits(8)
+      format.setMaximumIntegerDigits(8)
+      //System.out.println(format.format(2132323213.23266666666));
 
       // get info
       val numFeatures = factorMatrix.numCols
@@ -184,14 +192,14 @@ object FMModel extends Loader[FMModel] {
       for (i <- 0 until numFeatures){
         val arrBuffer = ArrayBuffer[String]()
 
-        val idName: String = IDFeatureMap.getOrElse(i.toString,"NULL")
+        val idName: String = IDFeatureMap.getOrElse((i+1).toString,"NULL")
         arrBuffer += idName
-        val weight: String = weightVector.apply(i).toString
-        arrBuffer += weight
+        val weight: Double = weightVector.apply(i)
+        arrBuffer += format.format(weight)
 
         for (f <- 0 until numFactors){
-          val elem = factorMatrix(f,i).toString
-          arrBuffer += elem
+          val elem = factorMatrix(f,i)
+          arrBuffer += format.format(elem)
         }
         writer.write(arrBuffer.toArray.mkString("\t") + "\n")
       }
