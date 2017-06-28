@@ -182,13 +182,15 @@ object FMModel extends Loader[FMModel] {
       writer.write(s"nfactor\t$numFactors\n")
 
       for (i <- 0 until numFeatures){
-        val arrBuffer = ArrayBuffer[Double]()
+        val arrBuffer = ArrayBuffer[String]()
 
-        val weight = weightVector.apply(i)
+        val idName: String = IDFeatureMap.getOrElse(i.toString,"NULL")
+        arrBuffer += idName
+        val weight: String = weightVector.apply(i).toString
         arrBuffer += weight
 
         for (f <- 0 until numFactors){
-          val elem = factorMatrix(f,i)
+          val elem = factorMatrix(f,i).toString
           arrBuffer += elem
         }
         writer.write(arrBuffer.toArray.mkString("\t") + "\n")
