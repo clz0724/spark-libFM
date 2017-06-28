@@ -174,7 +174,7 @@ object FMModel extends Loader[FMModel] {
       // get info
       val numFeatures = factorMatrix.numCols
       val numFactors = factorMatrix.numRows
-      val weightLen = weightVector.size()
+      val weightLen = weightVector.toArray.length
       require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
 
       val writer = new PrintWriter(new File(localPath))
