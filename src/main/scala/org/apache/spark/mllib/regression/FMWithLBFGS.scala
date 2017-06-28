@@ -255,7 +255,7 @@ class FMWithLBFGS(private var task: Int,
       if (ifTestTrain != 0){
         trainAUC = util.evaluate(model,input)
         testAUC = util.evaluate(model,test)
-        logger.info(s"========>STEP: $iter, Train ROC: $trainAUC, Test AUC: $testAUC")
+        logger.info(s"========>STEP: $iter, Train AUC: $trainAUC, Test AUC: $testAUC")
       }else{
         testAUC = util.evaluate(model,test)
         logger.info(s"========>STEP: $iter, Test AUC: $testAUC")
