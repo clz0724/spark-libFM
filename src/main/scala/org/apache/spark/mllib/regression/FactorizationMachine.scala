@@ -204,6 +204,8 @@ object FMModel extends Loader[FMModel] {
   }
 
   override def load(sc: SparkContext, path: String): FMModel = {
+    SaveLoadV1_0.load(sc, path)
+    /*
     implicit val formats = DefaultFormats
 
     val (loadedClassName, version, metadata) = loadMetadata(sc, path)
@@ -228,7 +230,7 @@ object FMModel extends Loader[FMModel] {
         s"FMModel.load did not recognize model with (className, format version):" +
           s"($loadedClassName, $version).  Supported:\n" +
           s"  ($classNameV1_0, 1.0)")
-    }
+    }*/
   }
 }
 

@@ -118,8 +118,8 @@ object TestFM extends App {
 
 
     logger.info("processing data")
-    val train_data = process_data(sc,train_path_in)
-    val test_data = process_data(sc,test_path_in)
+    //val train_data = process_data(sc,train_path_in)
+    //val test_data = process_data(sc,test_path_in)
 
     //    val task = args(1).toInt
     //    val numIterations = args(2).toInt
