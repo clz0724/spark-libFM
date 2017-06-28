@@ -1,19 +1,23 @@
 package org.apache.spark.mllib.regression
 
+import java.io.{File, PrintWriter}
+
 import org.json4s.DefaultFormats
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 import scala.util.Random
-
-import org.apache.spark.{SparkContext, Logging}
+import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.mllib.linalg._
-import org.apache.spark.mllib.optimization.{Updater, Gradient}
+import org.apache.spark.mllib.optimization.{Gradient, Updater}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.mllib.util.Loader._
 import org.apache.spark.mllib.util.{Loader, Saveable}
 import org.apache.spark.sql.{DataFrame, SQLContext}
+
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 
 /**
   * Created by zrf on 4/13/15.
@@ -132,6 +136,71 @@ object FMModel extends Loader[FMModel] {
       val max = data.getDouble(5)
       new FMModel(task, factorMatrix, weightVector, intercept, min, max)
     }
+
+    def loadWeight2Local(sc: SparkContext, Modelpath: String,localPath:String,featureIDPath:String):Unit = {
+      """
+        Modelpath: hdfs modelpath
+        localPath: local save path
+        featureIDPath: local id path
+      """.stripMargin
+      val sqlContext = new SQLContext(sc)
+      // Load Parquet data.
+      val dataRDD = sqlContext.parquetFile(dataPath(Modelpath))
+      // Check schema explicitly since erasure makes it hard to use match-case for checking.
+      checkSchema[Data](dataRDD.schema)
+      val dataArray = dataRDD.select("task", "factorMatrix", "weightVector", "intercept", "min", "max").take(1)
+      assert(dataArray.length == 1, s"Unable to load FMModel data from: ${dataPath(Modelpath)}")
+      val data = dataArray(0)
+      val task = data.getInt(0)
+      val factorMatrix: Matrix = data.getAs[Matrix](1)
+      val weightVector: Option[Vector] = data.getAs[Option[Vector]](2)
+      val intercept: Double = data.getDouble(3)
+      val min = data.getDouble(4)
+      val max = data.getDouble(5)
+
+      // get feature Map
+      val file = Source.fromFile(featureIDPath)
+
+      var IDFeatureMap:Map[String,String] = Map()
+      for (line <- file.getLines){
+        val segs = line.split('\t')
+        val len = segs.length
+        require(len == 6, s"$featureIDPath file has $len columns, need 6, and col0 is id , col2 is id name!")
+        val ID = segs(0)
+        val NAME = segs(2)
+        IDFeatureMap += (ID -> NAME)
+      }
+
+      // get info
+      val numFeatures = factorMatrix.numCols
+      val numFactors = factorMatrix.numRows
+      val weightLen = weightVector.size()
+      require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
+
+      val writer = new PrintWriter(new File(localPath))
+      writer.write(s"bias\t$intercept\n")
+      writer.write(s"nfactor\t$numFactors\n")
+
+      for (i <- 0 until numFeatures){
+        val arrBuffer = ArrayBuffer[Double]()
+
+        val weight = weightVector.get(i)
+        arrBuffer += weight
+
+        for (f <- 0 until numFactors){
+          val elem = factorMatrix(f,i)
+          arrBuffer += elem
+        }
+        writer.write(arrBuffer.toArray.mkString("\t") + "\n")
+      }
+    }
+  }
+
+
+  def loadWeight2Local(sc: SparkContext, Modelpath: String,localPath:String,featureIDPath:String):Unit = {
+
+    SaveLoadV1_0.loadWeight2Local(sc,Modelpath,localPath,featureIDPath)
+
   }
 
   override def load(sc: SparkContext, path: String): FMModel = {
