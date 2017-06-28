@@ -137,6 +137,8 @@ object TestFM extends App {
 
     // save weight factor to local
     logger.info(s"save weight to local : $localPath")
+    FMModel.load(sc,checkPointPath+s"/model")
+    logger.info(s"save weight to local : $localPath")
     FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
 
     sc.stop()
