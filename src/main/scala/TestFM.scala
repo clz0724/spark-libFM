@@ -1,15 +1,15 @@
 
+import java.io.Serializable
+
 import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
-import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.rdd.RDD
 
 
 object TestFM extends App {
   def indiceChange(sc: SparkContext,path_in :String): RDD[String] ={
     """
-      |indice base 0 to 1; label 0 to -1
     """.stripMargin
     val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
@@ -35,14 +35,7 @@ object TestFM extends App {
         // string line
         line_arr.mkString(" ")
     }
-
-
-    //print(train.take(2))
-
-    //train.saveAsTextFile(path_out)
-
     train
-
   }
 
   def process_data(sc:SparkContext,path_in:String,ifSplit:Double):Array[RDD[LabeledPoint]]={
@@ -56,10 +49,7 @@ object TestFM extends App {
     }else{
       return Array(data)
     }
-
-
   }
-
 
   override def main(args: Array[String]): Unit = {
 
@@ -91,19 +81,6 @@ object TestFM extends App {
     val inregParam = (0,inreg1,inreg2)
 
 
-    /*
-    val intask = 1
-    val inallIterations = 20
-    val innumCorrections = 5
-    val intolerance = 1e-7
-    val indim = 5
-    val inregParam = (0,0.01,0.01)
-    val ininitStd = 0.1
-    val instep = 1
-    val checkPointPath = "/team/ad_wajue/chenlongzhen/checkPoint"
-    val earlyStop = 10
-    */
-
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
@@ -115,38 +92,35 @@ object TestFM extends App {
     sc.setCheckpointDir("/team/ad_wajue/chenlongzhen/checkpoint")
 
 
-/*    val train_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
-    val train_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"
-    val test_path_in = "/team/ad_wajue/dw/rec_ml_dev6/rec_ml_dev6/model_dataSet/training"
-    val test_path_out = "/team/ad_wajue/chenlongzhen/model_dataSet/training_processed"*/
-
-
-    // process lines
-
-
-//
     logger.info("processing data")
-    val splitdata = process_data(sc,train_path_in,0.8)
-    val train_data = splitdata(0)
-    val test_data = splitdata(1)
 
-        val task = args(1).toInt
-        val numIterations = args(2).toInt
-        val stepSize = args(3).toDouble
-        val miniBatchFraction = args(4).toDouble
+    val useData = if (test_path_in == "0") {
+      val splitdata = process_data(sc, train_path_in, 0.8)
+      splitdata
+    }else{
+      val train_data = process_data(sc, train_path_in, 0)(0)
+      val test_data = process_data(sc, test_path_in, 0)(0)
+      Array(train_data,test_data)
+    }
 
-    //print("train SGD")
-    //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
+    val train_data = useData(0)
+    val test_data = useData(1)
+
+    val task = args(1).toInt
+    val numIterations = args(2).toInt
+    val stepSize = args(3).toDouble
+    val miniBatchFraction = args(4).toDouble
 
     logger.info("train lbfgs")
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
       numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
-      dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
-      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain,localPath=localPath,featureIDPath=featureIDPath,reload=0)
+      dim = (true,true,indim), regParam = (0,inreg1,inreg2), initStd =ininitStd,step = instep,
+      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain,
+      localPath=localPath,featureIDPath=featureIDPath,reload=0)
 
      //save weight factor to local : no use! wrong version!
-    //logger.info(s"save weight to local : $localPath")
-    //FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
+     //logger.info(s"save weight to local : $localPath")
+     //FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
 
     sc.stop()
   }
