@@ -45,12 +45,19 @@ object TestFM extends App {
 
   }
 
-  def process_data(sc:SparkContext,path_in:String):RDD[LabeledPoint]={
+  def process_data(sc:SparkContext,path_in:String,ifSplit:Double):Array[RDD[LabeledPoint]]={
 
     val train: RDD[String] = indiceChange(sc,path_in)
     val util = new MyUtil
     val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = 1000).cache()
-    data
+    if (ifSplit > 0 && ifSplit < 1){
+      val splitRdd: Array[RDD[LabeledPoint]] = data.randomSplit(Array(10*ifSplit,10*(1-ifSplit)),2017)
+      return splitRdd
+    }else{
+      return Array(data)
+    }
+
+
   }
 
 
@@ -119,8 +126,9 @@ object TestFM extends App {
 
 //
     logger.info("processing data")
-    val train_data = process_data(sc,train_path_in)
-    val test_data = process_data(sc,test_path_in)
+    val splitdata = process_data(sc,train_path_in,0.8)
+    val train_data = splitdata(0)
+    val test_data = splitdata(1)
 
         val task = args(1).toInt
         val numIterations = args(2).toInt
