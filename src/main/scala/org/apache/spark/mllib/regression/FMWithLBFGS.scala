@@ -385,8 +385,8 @@ class FMWithLBFGS(private var task: Int,
         logger.info(s"pastAUC is $pastAUC, step $iter AUC is $testAUC, save model to checkPointPath," +
           s"early Stop tolerance is $esTolerance .")
         bestWeights = weights
-        //util.rmHDFS(path = checkPointPath + s"/model")
-        //model.save(sc,checkPointPath + s"/model")
+        util.rmHDFS(path = checkPointPath + s"/model")
+        model.save(sc,checkPointPath + s"/model")
         // reset it
         pastAUC = testAUC
         esTolerance = 0
