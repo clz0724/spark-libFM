@@ -80,6 +80,7 @@ class FMWithLBFGS(private var task: Int,
   private var minLabel: Double = Double.MaxValue
   private var maxLabel: Double = Double.MinValue
 
+  private  val logger = Logger.getLogger("MY LOGGER")
   /**
    * A (Boolean,Boolean,Int) 3-Tuple stands for whether the global bias term should be used, whether the one-way
    * interactions should be used, and the number of factors that are used for pairwise interactions, respectively.
@@ -177,6 +178,8 @@ class FMWithLBFGS(private var task: Int,
    */
   private def createModel(weights: Vector): FMModel = {
 
+
+
     val values = weights.toArray
 
     val v = new DenseMatrix(k2, numFeatures, values.slice(0, numFeatures * k2))
@@ -201,6 +204,7 @@ class FMWithLBFGS(private var task: Int,
     }
 
     this.numFeatures = input.first().features.size
+    logger.info(s"numFeatures: $numFeatures")
     require(numFeatures > 0)
 
     if (task == 0) {
@@ -235,7 +239,6 @@ class FMWithLBFGS(private var task: Int,
     // init
     val initWeights: Vector = generateInitWeights()
     val util  = new MyUtil
-    val logger = Logger.getLogger("MY LOGGER")
     var weights: Vector = initWeights
 
 

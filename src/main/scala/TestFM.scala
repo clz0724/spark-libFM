@@ -118,23 +118,23 @@ object TestFM extends App {
 
 
 //
-//    logger.info("processing data")
-//    val train_data = process_data(sc,train_path_in)
-//    val test_data = process_data(sc,test_path_in)
-//
-//        val task = args(1).toInt
-//        val numIterations = args(2).toInt
-//        val stepSize = args(3).toDouble
-//        val miniBatchFraction = args(4).toDouble
-//
-//    //print("train SGD")
-//    //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
-//
-//    logger.info("train lbfgs")
-//    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
-//      numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
-//      dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
-//      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain)
+    logger.info("processing data")
+    val train_data = process_data(sc,train_path_in)
+    val test_data = process_data(sc,test_path_in)
+
+        val task = args(1).toInt
+        val numIterations = args(2).toInt
+        val stepSize = args(3).toDouble
+        val miniBatchFraction = args(4).toDouble
+
+    //print("train SGD")
+    //val fm1 = FMWithSGD.train(training, task = 1, numIterations = 100, stepSize = 0.15, miniBatchFraction = 1.0, dim = (true, true, 4), regParam = (0, 0, 0), initStd = 0.1)
+
+    logger.info("train lbfgs")
+    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
+      numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
+      dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
+      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain)
 
      //save weight factor to local
     logger.info(s"save weight to local : $localPath")
