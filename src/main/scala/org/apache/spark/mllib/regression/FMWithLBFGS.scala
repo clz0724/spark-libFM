@@ -284,8 +284,8 @@ class FMWithLBFGS(private var task: Int,
       }
       numLine += 1
       writer.write(s"$numLine"+ arrBuffer.toArray.mkString("\t") + "\n")
-      writer.close()
     }
+    writer.close()
     logger.info(s"loop $numLine data")
   }
 

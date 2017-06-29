@@ -206,6 +206,7 @@ object FMModel extends Loader[FMModel] {
         }
         writer.write(arrBuffer.toArray.mkString("\t") + "\n")
       }
+      writer.close()
     }
   }
 
