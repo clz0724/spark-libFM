@@ -266,9 +266,8 @@ class FMWithLBFGS(private var task: Int,
 
 
     val writer = new PrintWriter(localPath)
-    var saveFile:String = ""
-    saveFile += s"bias\t$intercept\n"
-    saveFile += s"nfactor\t$numFactors\n"
+    writer.write(s"bias\t$intercept\n")
+    writer.write(s"nfactor\t$numFactors\n")
 
     numLine = 0
     for (i <- 0 until numFeatures) {
@@ -283,13 +282,10 @@ class FMWithLBFGS(private var task: Int,
         val elem = factorMatrix(f, i)
         arrBuffer += format.format(elem)
       }
-      saveFile += arrBuffer.toArray.mkString("\t") + "\n"
       numLine += 1
+      writer.write(s"$numLine"+ arrBuffer.toArray.mkString("\t") + "\n")
     }
-    writer.write(saveFile)
-    val len = saveFile.stripMargin.split('\n').length
     logger.info(s"loop $numLine data")
-    logger.info(s"have $len data")
   }
 
   /**
