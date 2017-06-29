@@ -1,5 +1,6 @@
 package org.apache.spark.mllib.regression
 
+import org.apache.log4j.Logger
 import java.io.{File, PrintWriter}
 import java.text.NumberFormat
 
@@ -183,6 +184,8 @@ object FMModel extends Loader[FMModel] {
       val numFeatures = factorMatrix.numCols
       val numFactors = factorMatrix.numRows
       val weightLen = weightVector.toArray.length
+      val logger =  Logger.getLogger("MY LOG")
+      logger.info(s"In load, $numFeatures $numFactors $weightLen ")
       require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
 
       val writer = new PrintWriter(new File(localPath))

@@ -257,7 +257,8 @@ class FMWithLBFGS(private var task: Int,
       // optimize
       weights= optimizer.optimize(data, weights)
       val model: FMModel = createModel(weights)
-      logger.info(s"Weight length: $weights")
+      val infoweights = weights.size
+      logger.info(s"Weight length: $infoweights")
 
       // AUC
       var trainAUC = -0.1
