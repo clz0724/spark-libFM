@@ -223,7 +223,7 @@ class FMWithLBFGS(private var task: Int,
 
     // rename
     val factorMatrix = v
-    val weightVector = w
+    val weightVector: Option[Vector] = w
     val intercept = w0
 
     // get feature Map
@@ -249,7 +249,7 @@ class FMWithLBFGS(private var task: Int,
     // get info
     val numFeatures = factorMatrix.numCols
     val numFactors = factorMatrix.numRows
-    val weightLen = weightVector.toArray.length
+    val weightLen = weightVector.size
     val logger = Logger.getLogger("MY LOG")
     logger.info(s"In load, $numFeatures $numFactors $weightLen ")
     require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
