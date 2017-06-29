@@ -49,11 +49,12 @@ object FMWithLBFGS {
             sc:SparkContext,
             ifTestTrain:Int,
             localPath:String,
-            featureIDPath:String
+            featureIDPath:String,
+            reload:Int
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath)
+      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath,reload)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -283,17 +284,21 @@ class FMWithLBFGS(private var task: Int,
         arrBuffer += format.format(elem)
       }
       numLine += 1
-      writer.write(s"$numLine"+ arrBuffer.toArray.mkString("\t") + "\n")
+      writer.write(arrBuffer.toArray.mkString("\t") + "\n")
     }
     writer.close()
     logger.info(s"loop $numLine data")
   }
 
+  private def loadBeforeWeight(path:String): Unit ={
+    //TODO :ID 会变 ！
+
+  }
   /**
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int,localPath:String,featureIDPath:String): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int,localPath:String,featureIDPath:String,reload:Int): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -333,9 +338,19 @@ class FMWithLBFGS(private var task: Int,
         input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist()
     }
 
-    // init
-    val initWeights: Vector = generateInitWeights()
     val util  = new MyUtil
+    // init
+//    if ( util.dirExists(checkPointPath + s"/model") && reload == 1 ){
+//      logger.info(s"load init  weights from $checkPointPath/model!")
+//      // 未实现
+//      generateInitWeights()
+//
+//    } else {
+//      logger.info("Init weights randomly!")
+//      generateInitWeights()
+//    }
+    val initWeights = generateInitWeights()
+
     var weights: Vector = initWeights
     var bestWeights : Vector = initWeights
 

@@ -134,7 +134,7 @@ object TestFM extends App {
     val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
       numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
       dim = (true,true,indim), regParam = (0,0.01,0.01), initStd =ininitStd,step = instep,
-      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain,localPath=localPath,featureIDPath=featureIDPath)
+      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain,localPath=localPath,featureIDPath=featureIDPath,reload=0)
 
      //save weight factor to local : no use! wrong version!
     //logger.info(s"save weight to local : $localPath")

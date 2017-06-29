@@ -29,6 +29,13 @@ class MyUtil {
   }
 
 
+  def dirExists(path: String):Boolean= {
+    val hadoopConf = new org.apache.hadoop.conf.Configuration()
+    val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://ns2"), hadoopConf)
+    val exists = hdfs.exists(new org.apache.hadoop.fs.Path(path))
+    exists
+    }
+
   /**
     * Loads labeled data in the LIBSVM format into an RDD[LabeledPoint].
     * The LIBSVM format is a text-based format used by LIBSVM and LIBLINEAR.
