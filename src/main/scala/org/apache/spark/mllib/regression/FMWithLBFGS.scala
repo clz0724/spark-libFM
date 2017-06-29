@@ -204,7 +204,7 @@ class FMWithLBFGS(private var task: Int,
 
     val infov1 = v.numCols
     val infov2 = v.numRows
-    val infow = w.size
+    val infow = w.toArray.length
 
     logger.info(s"createModel task: $task, v col: $infov1, v row: $infov2, w length: $infow, w0 length: 1")
 
@@ -221,7 +221,7 @@ class FMWithLBFGS(private var task: Int,
 
     val v = new DenseMatrix(k2, this.numFeatures, values.slice(0, this.numFeatures * k2))
 
-    val w: Option[Vector] = if (k1) Some(Vectors.dense(values.slice(this.numFeatures * k2, this.numFeatures * k2 + this.numFeatures))) else None
+    val w: Vector = Vectors.dense(values.slice(this.numFeatures * k2, this.numFeatures * k2 + this.numFeatures))
 
     val w0 = if (k0) values.last else 0.0
 
@@ -254,7 +254,7 @@ class FMWithLBFGS(private var task: Int,
     // get info
     val numFeatures = factorMatrix.numCols
     val numFactors = factorMatrix.numRows
-    val weightLen = weightVector.toVector.length
+    val weightLen = weightVector.toArray.length
     val logger = Logger.getLogger("MY LOG")
     logger.info(s"In load, $numFeatures $numFactors $weightLen ")
     require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
@@ -268,7 +268,7 @@ class FMWithLBFGS(private var task: Int,
 
       val idName: String = IDFeatureMap.getOrElse((i + 1).toString, "NULL")
       arrBuffer += idName
-      val weight: Double = weightVector.get(i)
+      val weight: Double = weightVector.apply(i)
       arrBuffer += format.format(weight)
 
       for (f <- 0 until numFactors) {
