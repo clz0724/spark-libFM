@@ -1,5 +1,8 @@
 package org.apache.spark.mllib.regression
 
+import java.io.{File, PrintWriter}
+import java.text.NumberFormat
+
 import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
@@ -7,8 +10,12 @@ import org.apache.spark.mllib.linalg.{DenseMatrix, Vector, Vectors}
 import org.apache.spark.mllib.optimization.LBFGS
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+
 import scala.util.Random
 import org.apache.spark.mllib.regression.MyUtil
+
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
 object FMWithLBFGS {
   /**
    * Train a Factoriaton Machine Regression model given an RDD of (label, features) pairs. We run a fixed number
@@ -40,11 +47,13 @@ object FMWithLBFGS {
             checkPointPath:String,
             earlyStop:Int,
             sc:SparkContext,
-            ifTestTrain:Int
+            ifTestTrain:Int,
+            localPath:String,
+            featureIDPath:String
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain)
+      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -199,10 +208,77 @@ class FMWithLBFGS(private var task: Int,
 
 
   /**
+    * save weight to local
+    */
+  private def saveWeight(weights: Vector,localPath:String,featureIDPath:String) {
+
+    val values = weights.toArray
+
+    val v = new DenseMatrix(k2, this.numFeatures, values.slice(0, this.numFeatures * k2))
+
+    val w = if (k1) Some(Vectors.dense(values.slice(this.numFeatures * k2, this.numFeatures * k2 + this.numFeatures))) else None
+
+    val w0 = if (k0) values.last else 0.0
+
+
+    // rename
+    val factorMatrix = v
+    val weightVector = w
+    val intercept = w0
+
+    // get feature Map
+    val file = Source.fromFile(featureIDPath)
+
+    var IDFeatureMap: Map[String, String] = Map()
+    for (line <- file.getLines) {
+      val segs = line.split('\t')
+      val len = segs.length
+      require(len == 6, s"$featureIDPath file has $len columns, need 6, and col0 is id , col2 is id name!")
+      val ID = segs(0)
+      val NAME = segs(2)
+      IDFeatureMap += (ID -> NAME)
+    }
+    // 保留小数
+    val format = NumberFormat.getInstance()
+    format.setMinimumFractionDigits(1)
+    format.setMinimumIntegerDigits(1)
+    format.setMaximumFractionDigits(8)
+    format.setMaximumIntegerDigits(8)
+    //System.out.println(format.format(2132323213.23266666666));
+
+    // get info
+    val numFeatures = factorMatrix.numCols
+    val numFactors = factorMatrix.numRows
+    val weightLen = weightVector.toArray.length
+    val logger = Logger.getLogger("MY LOG")
+    logger.info(s"In load, $numFeatures $numFactors $weightLen ")
+    require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
+
+    val writer = new PrintWriter(new File(localPath))
+    writer.write(s"bias\t$intercept\n")
+    writer.write(s"nfactor\t$numFactors\n")
+
+    for (i <- 0 until numFeatures) {
+      val arrBuffer = ArrayBuffer[String]()
+
+      val idName: String = IDFeatureMap.getOrElse((i + 1).toString, "NULL")
+      arrBuffer += idName
+      val weight: Double = weightVector.get(i)
+      arrBuffer += format.format(weight)
+
+      for (f <- 0 until numFactors) {
+        val elem = factorMatrix(f, i)
+        arrBuffer += format.format(elem)
+      }
+      writer.write(arrBuffer.toArray.mkString("\t") + "\n")
+    }
+  }
+
+  /**
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int,localPath:String,featureIDPath:String): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -296,6 +372,9 @@ class FMWithLBFGS(private var task: Int,
       }
 
     }
+    //save local
+    logger.info(s"save weights to local")
+    saveWeight(weights,localPath,featureIDPath)
 
     data.unpersist()
 

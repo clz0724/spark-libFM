@@ -48,7 +48,7 @@ class FMModel(val task: Int,
     if (weightVector.isDefined) {
       testData.foreachActive {
         case (i, v) =>
-          if (i <= numFeatures) {
+          if (i < numFeatures) { //有可能预测集合的feature数量比测试集合的数量多
             pred += weightVector.get(i) * v
           }
       }
@@ -59,7 +59,7 @@ class FMModel(val task: Int,
       var sumSqr = 0.0
       testData.foreachActive {
         case (i, v) =>
-          if (i <= numFeatures) {
+          if (i < numFeatures) {
             val d = factorMatrix(f, i) * v
             sum += d
             sumSqr += d * d
