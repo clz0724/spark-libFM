@@ -193,7 +193,6 @@ class FMWithLBFGS(private var task: Int,
   private def createModel(weights: Vector): FMModel = {
 
 
-
     val values = weights.toArray
 
     val v = new DenseMatrix(k2, numFeatures, values.slice(0, numFeatures * k2))
@@ -204,9 +203,9 @@ class FMWithLBFGS(private var task: Int,
 
     val infov1 = v.numCols
     val infov2 = v.numRows
-    val infow = w.toArray.length
+    val infow = w
 
-    logger.info(s"createModel task: $task, v col: $infov1, v row: $infov2, w length: $infow, w0 length: 1")
+    logger.info(s"createModel task: $task, v col: $infov1, v row: $infov2, w0 length: 1")
 
     new FMModel(task, v, w, w0, minLabel, maxLabel)
   }
@@ -216,6 +215,8 @@ class FMWithLBFGS(private var task: Int,
     * save weight to local
     */
   private def saveWeight(weights: Vector,localPath:String,featureIDPath:String) {
+
+    val logger = Logger.getLogger("MY LOGGER")
 
     val values = weights.toArray
 
@@ -235,6 +236,7 @@ class FMWithLBFGS(private var task: Int,
     val file = Source.fromFile(featureIDPath)
 
     var IDFeatureMap: Map[String, String] = Map()
+    var numLine = 0
     for (line <- file.getLines) {
       val segs = line.split('\t')
       val len = segs.length
@@ -242,7 +244,10 @@ class FMWithLBFGS(private var task: Int,
       val ID = segs(0)
       val NAME = segs(2)
       IDFeatureMap += (ID -> NAME)
+      numLine += 1
     }
+    val lastValue = IDFeatureMap.get(numLine.toString)
+    logger.info(s"read $numLine data, and last value is $lastValue")
     // 保留小数
     val format = NumberFormat.getInstance()
     format.setMinimumFractionDigits(1)
@@ -255,7 +260,6 @@ class FMWithLBFGS(private var task: Int,
     val numFeatures = factorMatrix.numCols
     val numFactors = factorMatrix.numRows
     val weightLen = weightVector.toArray.length
-    val logger = Logger.getLogger("MY LOG")
     logger.info(s"In load, $numFeatures $numFactors $weightLen ")
     require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
 
@@ -263,6 +267,7 @@ class FMWithLBFGS(private var task: Int,
     writer.write(s"bias\t$intercept\n")
     writer.write(s"nfactor\t$numFactors\n")
 
+    numLine = 0
     for (i <- 0 until numFeatures) {
       val arrBuffer = ArrayBuffer[String]()
 
@@ -276,7 +281,9 @@ class FMWithLBFGS(private var task: Int,
         arrBuffer += format.format(elem)
       }
       writer.write(arrBuffer.toArray.mkString("\t") + "\n")
+      numLine += 1
     }
+    logger.info(s"write $numLine data")
   }
 
   /**
