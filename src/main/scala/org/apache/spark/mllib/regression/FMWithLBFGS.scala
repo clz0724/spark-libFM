@@ -197,7 +197,7 @@ class FMWithLBFGS(private var task: Int,
 
     val v = new DenseMatrix(k2, numFeatures, values.slice(0, numFeatures * k2))
 
-    val w = if (k1) Some(Vectors.dense(values.slice(numFeatures * k2, numFeatures * k2 + numFeatures))) else None
+    val w: Option[Vector] = if (k1) Some(Vectors.dense(values.slice(numFeatures * k2, numFeatures * k2 + numFeatures))) else None
 
     val w0 = if (k0) values.last else 0.0
 
@@ -212,7 +212,7 @@ class FMWithLBFGS(private var task: Int,
 
 
   /**
-    * save weight to local
+    * save weight to hdfs
     */
   private def saveWeight(weights: Vector,localPath:String,featureIDPath:String) {
 
@@ -263,9 +263,12 @@ class FMWithLBFGS(private var task: Int,
     logger.info(s"In load, $numFeatures $numFactors $weightLen ")
     require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
 
-    val writer = new PrintWriter(new File(localPath))
-    writer.write(s"bias\t$intercept\n")
-    writer.write(s"nfactor\t$numFactors\n")
+
+
+    val writer = new PrintWriter(localPath)
+    var saveFile:String = ""
+    saveFile += s"bias\t$intercept\n"
+    saveFile += s"nfactor\t$numFactors\n"
 
     numLine = 0
     for (i <- 0 until numFeatures) {
@@ -280,10 +283,13 @@ class FMWithLBFGS(private var task: Int,
         val elem = factorMatrix(f, i)
         arrBuffer += format.format(elem)
       }
-      writer.write(arrBuffer.toArray.mkString("\t") + "\n")
+      saveFile += arrBuffer.toArray.mkString("\t") + "\n"
       numLine += 1
     }
-    logger.info(s"write $numLine data")
+    writer.write(saveFile)
+    val len = saveFile.stripMargin.split('\n').length
+    logger.info(s"loop $numLine data")
+    logger.info(s"have $len data")
   }
 
   /**
