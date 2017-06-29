@@ -188,6 +188,12 @@ class FMWithLBFGS(private var task: Int,
 
     val w0 = if (k0) values.last else 0.0
 
+    val infov1 = v.numCols
+    val infov2 = v.numRows
+    val infow = w.size
+
+    logger.info(s"createModel task: $task, v col: $infov1, v row: $infov2, w length: $infow, w0 length: 1")
+
     new FMModel(task, v, w, w0, minLabel, maxLabel)
   }
 
