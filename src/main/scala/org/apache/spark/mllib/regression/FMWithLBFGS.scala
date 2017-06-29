@@ -154,6 +154,11 @@ class FMWithLBFGS(private var task: Int,
     this
   }
 
+  def setNumFeatures(numFeatures: Int): this.type = {
+    require(numFeatures > 0)
+    this.numFeatures = numFeatures
+    this
+  }
 
   /**
    * Encode the FMModel to a dense vector, with its first numFeatures * numFactors elements representing the
@@ -216,14 +221,14 @@ class FMWithLBFGS(private var task: Int,
 
     val v = new DenseMatrix(k2, this.numFeatures, values.slice(0, this.numFeatures * k2))
 
-    val w = if (k1) Some(Vectors.dense(values.slice(this.numFeatures * k2, this.numFeatures * k2 + this.numFeatures))) else None
+    val w: Option[Vector] = if (k1) Some(Vectors.dense(values.slice(this.numFeatures * k2, this.numFeatures * k2 + this.numFeatures))) else None
 
     val w0 = if (k0) values.last else 0.0
 
 
     // rename
     val factorMatrix = v
-    val weightVector: Option[Vector] = w
+    val weightVector = w
     val intercept = w0
 
     // get feature Map
@@ -249,7 +254,7 @@ class FMWithLBFGS(private var task: Int,
     // get info
     val numFeatures = factorMatrix.numCols
     val numFactors = factorMatrix.numRows
-    val weightLen = weightVector.size
+    val weightLen = weightVector.toVector.length
     val logger = Logger.getLogger("MY LOG")
     logger.info(s"In load, $numFeatures $numFactors $weightLen ")
     require(numFeatures == weightLen, s"factorMatrix len $numFeatures, weightLen $weightLen, not euqal!")
