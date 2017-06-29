@@ -322,6 +322,7 @@ class FMWithLBFGS(private var task: Int,
     val initWeights: Vector = generateInitWeights()
     val util  = new MyUtil
     var weights: Vector = initWeights
+    var bestWeights : Vector = initWeights
 
 
     var pastAUC:Double= -1 // save every step's auc, for checkpoint
@@ -353,6 +354,7 @@ class FMWithLBFGS(private var task: Int,
 
         logger.info(s"pastAUC is $pastAUC, step $iter AUC is $testAUC, save model to checkPointPath," +
           s"early Stop tolerance is $esTolerance .")
+        bestWeights = weights
         util.rmHDFS(path = checkPointPath + s"/model")
         model.save(sc,checkPointPath + s"/model")
         // reset it
@@ -374,7 +376,7 @@ class FMWithLBFGS(private var task: Int,
     }
     //save local
     logger.info(s"save weights to local")
-    saveWeight(weights,localPath,featureIDPath)
+    saveWeight(bestWeights,localPath,featureIDPath)
 
     data.unpersist()
 
