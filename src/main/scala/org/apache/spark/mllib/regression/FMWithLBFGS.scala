@@ -287,7 +287,7 @@ class FMWithLBFGS(private var task: Int,
       writer.write(arrBuffer.toArray.mkString("\t") + "\n")
     }
     writer.close()
-    logger.info(s"loop $numLine data")
+    logger.debug(s"loop $numLine data")
   }
 
   private def loadBeforeWeight(path:String): Unit ={
@@ -365,7 +365,7 @@ class FMWithLBFGS(private var task: Int,
       weights= optimizer.optimize(data, weights)
       val model: FMModel = createModel(weights)
       val infoweights = weights.size
-      logger.info(s"Weight length: $infoweights")
+      logger.debug(s"Weight length: $infoweights")
 
       // AUC
       var trainAUC = -0.1
