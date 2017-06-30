@@ -333,9 +333,9 @@ class FMWithLBFGS(private var task: Int,
     // train data for optimize
     val data = task match {
       case 0 =>
-        input.map(l => (l.label, l.features)).persist()
+        input.map(l => (l.label, l.features)).persist(StorageLevel.MEMORY_ONLY_SER)
       case 1 =>
-        input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist()
+        input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist(StorageLevel.MEMORY_ONLY_SER)
     }
 
     val util  = new MyUtil
