@@ -57,6 +57,25 @@ object FMWithLBFGS {
       .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath,reload)
   }
 
+  def trainOnline(input: RDD[LabeledPoint],
+            task: Int,
+            numIterations: Int,
+            numCorrections: Int,
+            tolerance:Double,
+            dim: (Boolean, Boolean, Int),
+            regParam: (Double, Double, Double),
+            initStd: Double,
+            sc:SparkContext,
+            ifTestTrain:Int,
+            localPath:String,
+            featureIDPath:String,
+            reload:Int
+           ): FMModel = {
+    new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam,tolerance)
+      .setInitStd(initStd)
+      .runOnline(input,ifTestTrain,sc,localPath,featureIDPath,reload)
+  }
+
   //  def train(input: RDD[LabeledPoint],
   //            task: Int,
   //            numIterations: Int): FMModel = {
@@ -407,6 +426,76 @@ class FMWithLBFGS(private var task: Int,
     //save local
     logger.info(s"save weights to local")
     saveWeight(bestWeights,localPath,featureIDPath)
+
+    data.unpersist()
+
+    createModel(weights)
+  }
+  def runOnline(input: RDD[LabeledPoint],ifTestTrain:Int,sc:SparkContext,localPath:String,featureIDPath:String,reload:Int): FMModel = {
+
+    if (input.getStorageLevel == StorageLevel.NONE) {
+      logWarning("The input data is not directly cached, which may hurt performance if its"
+        + " parent RDDs are also uncached.")
+    }
+
+    this.numFeatures = input.first().features.size
+    logger.info(s"numFeatures: $numFeatures")
+    require(numFeatures > 0)
+
+    if (task == 0) {
+      val (minT, maxT) = input.map(_.label).aggregate[(Double, Double)]((Double.MaxValue, Double.MinValue))({
+        case ((min, max), v) => (Math.min(min, v), Math.max(max, v))
+      }, {
+        case ((min1, max1), (min2, max2)) =>
+          (Math.min(min1, min2), Math.max(max1, max2))
+      })
+
+      this.minLabel = minT
+      this.maxLabel = maxT
+    }
+
+    val gradient = new FMGradient(task, k0, k1, k2, numFeatures, minLabel, maxLabel)
+
+    val updater = new FMUpdater(k0, k1, k2, r0, r1, r2, numFeatures)
+
+    val optimizer = new LBFGS(gradient, updater)
+      .setNumIterations(numIterations)
+      .setConvergenceTol(tolerance)
+      .setNumCorrections(numCorrections)
+
+    // train data for optimize
+    val data = task match {
+      case 0 =>
+        input.map(l => (l.label, l.features)).persist(StorageLevel.MEMORY_AND_DISK)
+      case 1 =>
+        input.map(l => (if (l.label > 0) 1.0 else -1.0, l.features)).persist(StorageLevel.MEMORY_AND_DISK)
+    }
+
+    val util  = new MyUtil
+
+    val initWeights = generateInitWeights()
+
+    var weights: Vector = initWeights
+
+    // optimize
+    weights= optimizer.optimize(data, weights)
+
+    val model: FMModel = createModel(weights)
+
+    val infoweights = weights.size
+
+    logger.debug(s"Weight length: $infoweights")
+
+    // AUC
+    var trainAUC = -0.1
+    if (ifTestTrain != 0){
+      trainAUC = util.evaluate(model,input)
+      logger.info(s"========>Train AUC: $trainAUC")
+    }
+
+    //save local
+    logger.info(s"save weights to local")
+    saveWeight(weights,localPath,featureIDPath)
 
     data.unpersist()
 

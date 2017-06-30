@@ -96,33 +96,56 @@ object TestFM extends App {
     logger.info("processing data")
 
     val useData = if (test_path_in == "0") {
-      val splitdata = process_data(sc, train_path_in, 0.8)
-      splitdata
+      val splitdata: RDD[LabeledPoint] = process_data(sc, train_path_in, 0)(0)
+      Array(splitdata)
     }else{
       val train_data = process_data(sc, train_path_in, 0)(0)
       val test_data = process_data(sc, test_path_in, 0)(0)
       Array(train_data,test_data)
     }
 
-    val train_data = useData(0)
-    val test_data = useData(1)
+    if (useData.length != 1) { // train and test
+      val train_data = useData(0)
+      val test_data = useData(1)
 
-    val task = args(1).toInt
-    val numIterations = args(2).toInt
-    val stepSize = args(3).toDouble
-    val miniBatchFraction = args(4).toDouble
+      val task = args(1).toInt
+      val numIterations = args(2).toInt
+      val stepSize = args(3).toDouble
+      val miniBatchFraction = args(4).toDouble
 
-    logger.info("train lbfgs")
-    val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
-      numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
-      dim = (true,true,indim), regParam = (0,inreg1,inreg2), initStd =ininitStd,step = instep,
-      checkPointPath = checkPointPath,earlyStop = earlyStop,sc = sc, ifTestTrain=ifTestTrain,
-      localPath=localPath,featureIDPath=featureIDPath,reload=0)
+      logger.info("train lbfgs")
+      val fm2 = FMWithLBFGS.train(train_data, test_data, task = 1,
+        numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
+        dim = (true, true, indim), regParam = (0, inreg1, inreg2), initStd = ininitStd, step = instep,
+        checkPointPath = checkPointPath, earlyStop = earlyStop, sc = sc, ifTestTrain = ifTestTrain,
+        localPath = localPath, featureIDPath = featureIDPath, reload = 0)
 
-     //save weight factor to local : no use! wrong version!
-     //logger.info(s"save weight to local : $localPath")
-     //FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
+      //save weight factor to local : no use! wrong version!
+      //logger.info(s"save weight to local : $localPath")
+      //FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
 
-    sc.stop()
+      sc.stop()
+    }else{ //train only
+
+      val train_data = useData(0)
+
+      val task = args(1).toInt
+      val numIterations = args(2).toInt
+      val stepSize = args(3).toDouble
+      val miniBatchFraction = args(4).toDouble
+
+      logger.info("train online  lbfgs")
+      val fm2 = FMWithLBFGS.trainOnline(train_data, task = 1,
+        numIterations = inallIterations, numCorrections = innumCorrections,tolerance=intolerance,
+        dim = (true, true, indim), regParam = (0, inreg1, inreg2), initStd = ininitStd,
+        sc = sc, ifTestTrain = ifTestTrain,
+        localPath = localPath, featureIDPath = featureIDPath, reload = 0)
+
+      //save weight factor to local : no use! wrong version!
+      //logger.info(s"save weight to local : $localPath")
+      //FMModel.loadWeight2Local(sc,Modelpath = checkPointPath+s"/model",localPath = localPath,featureIDPath=featureIDPath)
+      sc.stop()
+
+    }
   }
 }
