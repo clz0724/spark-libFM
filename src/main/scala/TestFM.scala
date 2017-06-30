@@ -5,6 +5,7 @@ import org.apache.log4j.{Level, LogManager, Logger}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.regression._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
 
 
 object TestFM extends App {
@@ -42,7 +43,7 @@ object TestFM extends App {
 
     val train: RDD[String] = indiceChange(sc,path_in)
     val util = new MyUtil
-    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = 1000).cache()
+    val data: RDD[LabeledPoint] = util.loadLibSVMFile(sc, train,numFeatures = -1,minPartitions = 1000).persist(StorageLevel.MEMORY_AND_DISK)
     if (ifSplit > 0 && ifSplit < 1){
       val splitRdd: Array[RDD[LabeledPoint]] = data.randomSplit(Array(10*ifSplit,10*(1-ifSplit)),2017)
       return splitRdd
