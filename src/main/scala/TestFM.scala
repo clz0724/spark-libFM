@@ -98,9 +98,9 @@ object TestFM extends App {
 
     logger.info("processing data")
 
-    val useData = if (test_path_in == "0") {
-      val splitdata: RDD[LabeledPoint] = process_data(sc, train_path_in, ifSplit)(0)
-      Array(splitdata)
+    val useData: Array[RDD[LabeledPoint]] = if (test_path_in == "0") {
+      val splitdata: Array[RDD[LabeledPoint]] = process_data(sc, train_path_in, ifSplit)
+      splitdata
     }else{
       val train_data = process_data(sc, train_path_in, 0)(0)
       val test_data = process_data(sc, test_path_in, 0)(0)
