@@ -15,7 +15,7 @@ object TestFM extends App {
     val data = sc.textFile(path_in,minPartitions = 1000)
     val train: RDD[String] = data.map{
       line=>
-        val segs: Array[String] = line.split('\t')
+        val segs: Array[String] = line.split(' ')
         val label = if(segs(0) == "1") "1" else "-1"
         val features = segs.drop(1)
         // add indices 1
@@ -81,6 +81,8 @@ object TestFM extends App {
 
     val inregParam = (0,inreg1,inreg2)
 
+    val ifSplit = args(17).toDouble
+
 
     // print warn
     Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
@@ -96,7 +98,7 @@ object TestFM extends App {
     logger.info("processing data")
 
     val useData = if (test_path_in == "0") {
-      val splitdata: RDD[LabeledPoint] = process_data(sc, train_path_in, 0)(0)
+      val splitdata: RDD[LabeledPoint] = process_data(sc, train_path_in, ifSplit)(0)
       Array(splitdata)
     }else{
       val train_data = process_data(sc, train_path_in, 0)(0)
