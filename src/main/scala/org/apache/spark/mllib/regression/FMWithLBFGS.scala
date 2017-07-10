@@ -50,11 +50,12 @@ object FMWithLBFGS {
             ifTestTrain:Int,
             localPath:String,
             featureIDPath:String,
-            reload:Int
+            reload:Int,
+            ifSaveWeight:Int
             ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam, tolerance)
       .setInitStd(initStd)
-      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath,reload)
+      .run(input,test,step,checkPointPath,earlyStop,sc,ifTestTrain,localPath,featureIDPath,reload,ifSaveWeight)
   }
 
   def trainOnline(input: RDD[LabeledPoint],
@@ -69,11 +70,12 @@ object FMWithLBFGS {
             ifTestTrain:Int,
             localPath:String,
             featureIDPath:String,
-            reload:Int
+            reload:Int,
+                  ifSaveWeight:Int
            ): FMModel = {
     new FMWithLBFGS(task, numIterations, numCorrections, dim, regParam,tolerance)
       .setInitStd(initStd)
-      .runOnline(input,ifTestTrain,sc,localPath,featureIDPath,reload)
+      .runOnline(input,ifTestTrain,sc,localPath,featureIDPath,reload,ifSaveWeight)
   }
 
   //  def train(input: RDD[LabeledPoint],
@@ -260,7 +262,7 @@ class FMWithLBFGS(private var task: Int,
     for (line <- file.getLines) {
       val segs = line.split('\t')
       val len = segs.length
-      require(len == 6, s"$featureIDPath file has $len columns, need 6, and col0 is id , col2 is id name!")
+      require(len >= 3, s"$featureIDPath file has $len columns, need >3, and col0 is id , col2 is id name!")
       val ID = segs(0)
       val NAME = segs(2)
       IDFeatureMap += (ID -> NAME)
@@ -317,7 +319,7 @@ class FMWithLBFGS(private var task: Int,
    * Run the algorithm with the configured parameters on an input RDD
    * of LabeledPoint entries.
    */
-  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int,localPath:String,featureIDPath:String,reload:Int): FMModel = {
+  def run(input: RDD[LabeledPoint],test:RDD[LabeledPoint],step:Int,checkPointPath:String,earlyStop:Int, sc:SparkContext,ifTestTrain:Int,localPath:String,featureIDPath:String,reload:Int,ifSaveWeight:Int): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -425,13 +427,15 @@ class FMWithLBFGS(private var task: Int,
     }
     //save local
     logger.info(s"save weights to local")
-    saveWeight(bestWeights,localPath,featureIDPath)
+    if(ifSaveWeight == 1){
+      saveWeight(bestWeights,localPath,featureIDPath)
+    }
 
     data.unpersist()
 
     createModel(weights)
   }
-  def runOnline(input: RDD[LabeledPoint],ifTestTrain:Int,sc:SparkContext,localPath:String,featureIDPath:String,reload:Int): FMModel = {
+  def runOnline(input: RDD[LabeledPoint],ifTestTrain:Int,sc:SparkContext,localPath:String,featureIDPath:String,reload:Int,ifSaveWeight:Int): FMModel = {
 
     if (input.getStorageLevel == StorageLevel.NONE) {
       logWarning("The input data is not directly cached, which may hurt performance if its"
@@ -495,7 +499,9 @@ class FMWithLBFGS(private var task: Int,
 
     //save local
     logger.info(s"save weights to local")
-    saveWeight(weights,localPath,featureIDPath)
+    if(ifSaveWeight==1){
+      saveWeight(weights,localPath,featureIDPath)
+    }
 
     data.unpersist()
 

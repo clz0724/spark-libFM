@@ -23,8 +23,8 @@ object TestFM extends App {
           elem =>
             val index = elem.split(":")(0).toInt
             val value = elem.split(":")(1)
-            //val new_index = index + 1
-            val new_index = index
+            val new_index = index + 1 //index should be begin 1
+            //val new_index = index
             new_index.toString + ":" +value
         }
         // sort index
@@ -82,6 +82,7 @@ object TestFM extends App {
     val inregParam = (0,inreg1,inreg2)
 
     val ifSplit = args(17).toDouble
+    val ifSaveweight = args(18).toInt
 
 
     // print warn
@@ -120,7 +121,7 @@ object TestFM extends App {
         numIterations = inallIterations, numCorrections = innumCorrections, tolerance = intolerance,
         dim = (true, true, indim), regParam = (0, inreg1, inreg2), initStd = ininitStd, step = instep,
         checkPointPath = checkPointPath, earlyStop = earlyStop, sc = sc, ifTestTrain = ifTestTrain,
-        localPath = localPath, featureIDPath = featureIDPath, reload = 0)
+        localPath = localPath, featureIDPath = featureIDPath, reload = 0,ifSaveWeight = 0)
 
       //save weight factor to local : no use! wrong version!
       //logger.info(s"save weight to local : $localPath")
@@ -141,7 +142,7 @@ object TestFM extends App {
         numIterations = inallIterations, numCorrections = innumCorrections,tolerance=intolerance,
         dim = (true, true, indim), regParam = (0, inreg1, inreg2), initStd = ininitStd,
         sc = sc, ifTestTrain = ifTestTrain,
-        localPath = localPath, featureIDPath = featureIDPath, reload = 0)
+        localPath = localPath, featureIDPath = featureIDPath, reload = 0/*未实现*/,ifSaveWeight = 0)
 
       //save weight factor to local : no use! wrong version!
       //logger.info(s"save weight to local : $localPath")
